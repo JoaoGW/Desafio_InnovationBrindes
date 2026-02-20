@@ -1,13 +1,38 @@
 "use client";
 import { FormEvent, useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { postLogin } from "@/services/auth.service";
+import { useAuthStore } from "@/store/auth.store";
 
 export default function Login() {
   const [usuario, setUsuario] = useState("");
   const [senha, setSenha] = useState("");
+  const [erro, setErro] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const setAuth = useAuthStore((state) => state.setAuth);
+  const router = useRouter();
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setErro("");
+    setIsLoading(true);
+
+    try {
+      const resposta = await postLogin({ email: usuario, senha });
+
+      if (resposta.status === 1) {
+        setAuth(resposta.token_de_acesso, resposta.dados_usuario);
+        router.push("/produtos");
+      } else {
+        setErro(resposta.message || "Usuário ou senha inválidos.");
+      }
+    } catch {
+      setErro("Erro ao conectar com o servidor. Tente novamente.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -90,11 +115,18 @@ export default function Login() {
                 </button>
               </div>
 
+              {erro && (
+                <p className="rounded-md bg-red-500/20 px-4 py-2 text-center text-sm text-white">
+                  {erro}
+                </p>
+              )}
+
               <button
                 type="submit"
-                className="mx-auto mt-6 block h-13 w-42.5 rounded-full bg-[#efefef] text-base font-bold text-[#4d4d4d] transition hover:bg-white"
+                disabled={isLoading}
+                className="mx-auto mt-6 block h-13 w-42.5 rounded-full bg-[#efefef] text-base font-bold text-[#4d4d4d] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Login
+                {isLoading ? "Entrando..." : "Login"}
               </button>
             </div>
           </form>
