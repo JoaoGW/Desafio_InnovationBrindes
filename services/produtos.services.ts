@@ -33,3 +33,31 @@ export async function getProdutos(token: string): Promise<Product[]> {
 
   return data;
 }
+
+export async function getProdutosFiltrados(
+  token: string,
+  busca: string,
+): Promise<Product[]> {
+  const termo = busca.trim();
+
+  // A API aplica filtro AND quando os dois campos são preenchidos.
+  // Por isso enviamos apenas um campo por vez:
+  // - se o texto for numérico, busca pelo código do produto
+  // - caso contrário, busca pelo nome do produto
+  const isCodigo = /^\d+$/.test(termo);
+
+  const { data } = await api.post<Product[]>(
+    "/api/innova-dinamica/produtos/listar",
+    {
+      nome_produto: isCodigo ? "" : termo,
+      codigo_produto: isCodigo ? termo : "",
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+
+  return data;
+}
