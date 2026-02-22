@@ -14,9 +14,11 @@ type AuthState = {
   token: string | null;
   user: User | null;
   isAuthenticated: boolean;
+  isHydrated: boolean;
 
   setAuth: (token: string, user: User) => void;
   logout: () => void;
+  setHydrated: () => void;
 };
 
 /**
@@ -45,6 +47,7 @@ export const useAuthStore = create<AuthState>()(
       token: null,
       user: null,
       isAuthenticated: false,
+      isHydrated: false,
 
       setAuth: (token, user) =>
         set({
@@ -59,9 +62,19 @@ export const useAuthStore = create<AuthState>()(
           user: null,
           isAuthenticated: false,
         }),
+
+      setHydrated: () =>
+        set({
+          isHydrated: true,
+        }),
     }),
     {
       name: "auth-storage",
-    }
-  )
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          state.setHydrated();
+        }
+      },
+    },
+  ),
 );

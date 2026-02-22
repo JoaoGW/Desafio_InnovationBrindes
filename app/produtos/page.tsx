@@ -20,6 +20,7 @@ const PAGE_SIZE = 20;
 export default function Produtos() {
   const router = useRouter();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const isHydrated = useAuthStore((state) => state.isHydrated);
   const favorites = useFavoritesStore((state) => state.favorites);
   const showOnlyFavorites = useFavoritesStore(
     (state) => state.showOnlyFavorites,
@@ -132,12 +133,16 @@ export default function Produtos() {
   const hasMore = visibleCount < sortedProducts.length;
 
   useEffect(() => {
+    // Aguarda o Zustand hidratar (carregar do localStorage)
+    if (!isHydrated) return;
+
+    // Após hidratação, valida autenticação
     if (!isAuthenticated) {
       router.replace("/login");
     }
-  }, [isAuthenticated, router]);
+  }, [isHydrated, isAuthenticated, router]);
 
-  if (!isAuthenticated) {
+  if (!isHydrated || !isAuthenticated) {
     return null;
   }
 
@@ -170,7 +175,7 @@ export default function Produtos() {
                 setShowOnlyFavorites(!showOnlyFavorites);
                 setPage(1);
               }}
-              className={`h-10 cursor-pointer rounded border px-3 text-sm font-semibold transition ${
+              className={`h-10 cursor-pointer rounded border px-3 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#76b900] ${
                 showOnlyFavorites
                   ? "border-[#76b900] bg-[#76b900] text-white"
                   : "border-black bg-white text-black"

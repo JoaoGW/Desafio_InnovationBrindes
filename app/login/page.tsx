@@ -1,11 +1,20 @@
 "use client";
-import { FormEvent, useState } from "react";
+import { FormEvent, useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { postLogin } from "@/services/auth.service";
 import { useAuthStore } from "@/store/auth.store";
 
 export default function Login() {
+  useEffect(() => {
+    document.title = "Login | Innova Brindes";
+    document.head
+      .querySelector('meta[name="description"]')
+      ?.setAttribute(
+        "content",
+        "Faça login na plataforma Innova Brindes para acessar o catálogo de produtos personalizados.",
+      );
+  }, []);
   const [usuario, setUsuario] = useState("");
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState("");
