@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Heart, AlertCircle } from "lucide-react";
 import { Product } from "@/services/produtos.services";
+import { useFavoritesStore } from "@/store/favoritos.store";
 
 // Props básicas para controlar abertura, dados e fechamento da modal.
 type ProductModalProps = {
@@ -15,8 +17,13 @@ export default function ProductModal({
   product,
   onClose,
 }: ProductModalProps) {
+  const [imagemCarregada, setImagemCarregada] = useState(true);
   const modalRef = useRef<HTMLDivElement>(null);
   const titleId = `product-modal-title-${product.codigo}`;
+  const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite);
+  const isFavorite = useFavoritesStore((state) =>
+    state.isFavorite(product.codigo),
+  );
 
   useEffect(() => {
     if (!isOpen || !modalRef.current) return;
@@ -61,13 +68,13 @@ export default function ProductModal({
   if (!isOpen) return null;
 
   const precoNumero = parseFloat(product.preco);
-  const preco =
-    isNaN(precoNumero) || precoNumero < 0
-      ? "Indisponível"
-      : new Intl.NumberFormat("pt-BR", {
-          style: "currency",
-          currency: "BRL",
-        }).format(precoNumero);
+  const precoValido = !isNaN(precoNumero) && precoNumero > 0;
+  const preco = precoValido
+    ? new Intl.NumberFormat("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+      }).format(precoNumero)
+    : "Indisponível";
 
   return (
     <div
@@ -90,10 +97,20 @@ export default function ProductModal({
         </h2>
 
         <div className="mt-3 overflow-hidden rounded border border-[#d8d8d8] bg-[#f6f6f6]">
+          {!imagemCarregada && (
+            <div className="h-48 w-full flex flex-col items-center justify-center bg-[#e8e8e8] text-[#999999]">
+              <AlertCircle size={32} className="mb-1" />
+              <span className="text-[10px] font-semibold">
+                Imagem indisponível
+              </span>
+            </div>
+          )}
+
           <img
             src={product.imagem}
             alt={product.nome}
-            className="h-48 w-full object-cover"
+            onError={() => setImagemCarregada(false)}
+            className={`h-48 w-full object-cover ${!imagemCarregada ? "hidden" : ""}`}
             loading="lazy"
           />
         </div>
@@ -113,7 +130,27 @@ export default function ProductModal({
           </p>
         </div>
 
-        <div className="mt-4 flex justify-end border-t border-[#e6e6e6] pt-3">
+        <div className="mt-4 flex justify-end gap-2 border-t border-[#e6e6e6] pt-3">
+          <button
+            type="button"
+            onClick={() => toggleFavorite(product.codigo)}
+            className={`cursor-pointer rounded-sm border px-4 py-2 text-sm font-semibold transition ${
+              isFavorite
+                ? "border-[#e8475c] bg-[#e8475c] text-white"
+                : "border-[#d8d8d8] bg-white text-[#4d4d4d] hover:bg-[#f5f5f5]"
+            }`}
+          >
+            <span className="inline-flex items-center gap-1">
+              <Heart
+                size={14}
+                className={
+                  isFavorite ? "fill-white text-white" : "text-[#4d4d4d]"
+                }
+              />
+              {isFavorite ? "Favoritado" : "Favoritar"}
+            </span>
+          </button>
+
           <button
             type="button"
             onClick={onClose}

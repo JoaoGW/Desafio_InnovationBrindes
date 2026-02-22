@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { Heart, AlertCircle } from "lucide-react";
 import { Product } from "@/services/produtos.services";
 import ProductModal from "@/components/produtos/ProductModal";
+import { useFavoritesStore } from "@/store/favoritos.store";
 
 const CORES = [
   "#1f7fd0",
@@ -14,15 +16,20 @@ const CORES = [
 export default function ProductCard({ product }: { product: Product }) {
   const [corSelecionada, setCorSelecionada] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [imagemCarregada, setImagemCarregada] = useState(true);
+  const productId = product.codigo;
+
+  const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite);
+  const isFavorite = useFavoritesStore((state) => state.isFavorite(productId));
 
   const precoNumero = parseFloat(product.preco);
-  const preco =
-    isNaN(precoNumero) || precoNumero < 0
-      ? "Indisponível"
-      : new Intl.NumberFormat("pt-BR", {
-          style: "currency",
-          currency: "BRL",
-        }).format(precoNumero);
+  const precoValido = !isNaN(precoNumero) && precoNumero > 0;
+  const preco = precoValido
+    ? new Intl.NumberFormat("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+      }).format(precoNumero)
+    : "Indisponível";
 
   return (
     <article className="flex flex-col mb-8">
@@ -35,10 +42,36 @@ export default function ProductCard({ product }: { product: Product }) {
 
       <div className="flex flex-1 flex-col border border-[#d8d8d8] bg-[#fafafa] px-3 pb-3 pt-2">
         <div className="-mx-3 -mt-2 relative h-[190px] w-[calc(100%+1.5rem)] overflow-hidden bg-[#f4f4f4]">
+          {!imagemCarregada && (
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#e8e8e8] text-[#999999]">
+              <AlertCircle size={32} className="mb-1" />
+              <span className="text-[10px] font-semibold">
+                Imagem indisponível
+              </span>
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={() => toggleFavorite(productId)}
+            aria-label={
+              isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"
+            }
+            className="absolute left-2 top-2 z-10 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-white/90 text-[#4d4d4d] transition hover:scale-105"
+          >
+            <Heart
+              size={16}
+              className={
+                isFavorite ? "fill-[#e8475c] text-[#e8475c]" : "text-[#4d4d4d]"
+              }
+            />
+          </button>
+
           <img
             src={product.imagem}
             alt={product.nome}
-            className="h-full w-full object-cover"
+            onError={() => setImagemCarregada(false)}
+            className={`h-full w-full object-cover ${!imagemCarregada ? "hidden" : ""}`}
             loading="lazy"
           />
           <span className="absolute right-2 top-2 rounded bg-[#ececec]/80 px-1.5 py-0.5 text-[10px] font-bold text-[#07a6df]">
@@ -72,15 +105,19 @@ export default function ProductCard({ product }: { product: Product }) {
         </div>
 
         <div className="mt-auto pt-2 text-right">
-          <p className="text-[10px] font-semibold text-[#787878]">
-            a partir de
-          </p>
+          {preco !== "Indisponível" && (
+            <p className="text-[10px] font-semibold text-[#787878]">
+              a partir de
+            </p>
+          )}
           <p className="text-[28px] font-bold leading-none text-[#4d4d4d]">
             {preco}
           </p>
-          <p className="mt-0.5 text-[9px] font-semibold text-[#9a9a9a]">
-            gerado pela melhor oferta
-          </p>
+          {preco !== "Indisponível" && (
+            <p className="mt-0.5 text-[9px] font-semibold text-[#9a9a9a]">
+              gerado pela melhor oferta
+            </p>
+          )}
         </div>
       </div>
 
