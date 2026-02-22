@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { Heart } from "lucide-react";
 import { Product } from "@/services/produtos.services";
+import { useFavoritesStore } from "@/store/favoritos.store";
 
 // Props básicas para controlar abertura, dados e fechamento da modal.
 type ProductModalProps = {
@@ -17,6 +19,10 @@ export default function ProductModal({
 }: ProductModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const titleId = `product-modal-title-${product.codigo}`;
+  const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite);
+  const isFavorite = useFavoritesStore((state) =>
+    state.isFavorite(product.codigo),
+  );
 
   useEffect(() => {
     if (!isOpen || !modalRef.current) return;
@@ -113,7 +119,27 @@ export default function ProductModal({
           </p>
         </div>
 
-        <div className="mt-4 flex justify-end border-t border-[#e6e6e6] pt-3">
+        <div className="mt-4 flex justify-end gap-2 border-t border-[#e6e6e6] pt-3">
+          <button
+            type="button"
+            onClick={() => toggleFavorite(product.codigo)}
+            className={`cursor-pointer rounded-sm border px-4 py-2 text-sm font-semibold transition ${
+              isFavorite
+                ? "border-[#e8475c] bg-[#e8475c] text-white"
+                : "border-[#d8d8d8] bg-white text-[#4d4d4d] hover:bg-[#f5f5f5]"
+            }`}
+          >
+            <span className="inline-flex items-center gap-1">
+              <Heart
+                size={14}
+                className={
+                  isFavorite ? "fill-white text-white" : "text-[#4d4d4d]"
+                }
+              />
+              {isFavorite ? "Favoritado" : "Favoritar"}
+            </span>
+          </button>
+
           <button
             type="button"
             onClick={onClose}

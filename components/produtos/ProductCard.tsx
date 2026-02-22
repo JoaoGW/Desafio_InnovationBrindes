@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { Heart } from "lucide-react";
 import { Product } from "@/services/produtos.services";
 import ProductModal from "@/components/produtos/ProductModal";
+import { useFavoritesStore } from "@/store/favoritos.store";
 
 const CORES = [
   "#1f7fd0",
@@ -14,6 +16,10 @@ const CORES = [
 export default function ProductCard({ product }: { product: Product }) {
   const [corSelecionada, setCorSelecionada] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const productId = product.codigo;
+
+  const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite);
+  const isFavorite = useFavoritesStore((state) => state.isFavorite(productId));
 
   const precoNumero = parseFloat(product.preco);
   const preco =
@@ -35,6 +41,22 @@ export default function ProductCard({ product }: { product: Product }) {
 
       <div className="flex flex-1 flex-col border border-[#d8d8d8] bg-[#fafafa] px-3 pb-3 pt-2">
         <div className="-mx-3 -mt-2 relative h-[190px] w-[calc(100%+1.5rem)] overflow-hidden bg-[#f4f4f4]">
+          <button
+            type="button"
+            onClick={() => toggleFavorite(productId)}
+            aria-label={
+              isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"
+            }
+            className="absolute left-2 top-2 z-10 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-white/90 text-[#4d4d4d] transition hover:scale-105"
+          >
+            <Heart
+              size={16}
+              className={
+                isFavorite ? "fill-[#e8475c] text-[#e8475c]" : "text-[#4d4d4d]"
+              }
+            />
+          </button>
+
           <img
             src={product.imagem}
             alt={product.nome}

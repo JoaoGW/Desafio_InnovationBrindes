@@ -6,6 +6,7 @@ import { Search } from "lucide-react";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useProducts } from "@/hooks/useProducts";
 import { useAuthStore } from "@/store/auth.store";
+import { useFavoritesStore } from "@/store/favoritos.store";
 
 import Header from "@/components/layout/Header";
 import ProductCard from "@/components/produtos/ProductCard";
@@ -19,6 +20,13 @@ const PAGE_SIZE = 20;
 export default function Produtos() {
   const router = useRouter();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const favorites = useFavoritesStore((state) => state.favorites);
+  const showOnlyFavorites = useFavoritesStore(
+    (state) => state.showOnlyFavorites,
+  );
+  const setShowOnlyFavorites = useFavoritesStore(
+    (state) => state.setShowOnlyFavorites,
+  );
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("name-asc");
   const [page, setPage] = useState(1);
@@ -63,6 +71,14 @@ export default function Produtos() {
     [products],
   );
 
+  const favoriteFilteredProducts = useMemo(() => {
+    if (!showOnlyFavorites) return validProducts;
+
+    return validProducts.filter((product) =>
+      favorites.includes(product.codigo),
+    );
+  }, [favorites, showOnlyFavorites, validProducts]);
+
   // Lista de produtos válidos ordenada de acordo com a opção escolhida pelo usuário (sortBy).
   const sortedProducts = useMemo(() => {
     // Converte o nome do produto para string de forma segura. Se o valor for undefined ou null, retorna uma string vazia.
@@ -75,7 +91,7 @@ export default function Produtos() {
     };
 
     // Cria uma cópia do array para não alterar o original ao ordenar
-    const clonedProducts = [...validProducts];
+    const clonedProducts = [...favoriteFilteredProducts];
 
     // Aplica a ordenação conforme a opção selecionada
     switch (sortBy) {
@@ -101,7 +117,7 @@ export default function Produtos() {
           getNome(a.nome).localeCompare(getNome(b.nome), "pt-BR"),
         );
     }
-  }, [validProducts, sortBy]);
+  }, [favoriteFilteredProducts, sortBy]);
 
   // Calcula quantos produtos devem ser exibidos com base na página atual
   const visibleCount = page * PAGE_SIZE;
@@ -147,19 +163,36 @@ export default function Produtos() {
             />
           </div>
 
-          <select
-            value={sortBy}
-            onChange={(event) => {
-              setSortBy(event.target.value as SortOption);
-              setPage(1);
-            }}
-            className="h-10 rounded border border-black bg-white px-3 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
-          >
-            <option value="name-asc">Nome (A → Z)</option>
-            <option value="name-desc">Nome (Z → A)</option>
-            <option value="price-asc">Preço (menor → maior)</option>
-            <option value="price-desc">Preço (maior → menor)</option>
-          </select>
+          <div className="flex flex-col gap-2 md:flex-row">
+            <button
+              type="button"
+              onClick={() => {
+                setShowOnlyFavorites(!showOnlyFavorites);
+                setPage(1);
+              }}
+              className={`h-10 cursor-pointer rounded border px-3 text-sm font-semibold transition ${
+                showOnlyFavorites
+                  ? "border-[#76b900] bg-[#76b900] text-white"
+                  : "border-black bg-white text-black"
+              }`}
+            >
+              Mostrar apenas favoritos
+            </button>
+
+            <select
+              value={sortBy}
+              onChange={(event) => {
+                setSortBy(event.target.value as SortOption);
+                setPage(1);
+              }}
+              className="h-10 rounded border border-black bg-white px-3 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
+            >
+              <option value="name-asc">Nome (A → Z)</option>
+              <option value="name-desc">Nome (Z → A)</option>
+              <option value="price-asc">Preço (menor → maior)</option>
+              <option value="price-desc">Preço (maior → menor)</option>
+            </select>
+          </div>
         </div>
 
         {isLoading && (
