@@ -10,8 +10,10 @@ import { useAuthStore } from "@/store/auth.store";
 import Header from "@/components/layout/Header";
 import ProductCard from "@/components/produtos/ProductCard";
 
+// Opções pra exibição com sorting dos produtos
 type SortOption = "name-asc" | "name-desc" | "price-asc" | "price-desc";
 
+// Tamanho da paginação
 const PAGE_SIZE = 20;
 
 export default function Produtos() {
@@ -30,14 +32,22 @@ export default function Produtos() {
     refetch,
   } = useProducts(debouncedSearch);
 
+  // Matriz memorizada de produtos de acordo com a resposta dos produtos.
   const products = useMemo(
     () => (Array.isArray(productsResponse) ? productsResponse : []),
     [productsResponse],
   );
 
+  /**
+   * Lista de produtos considerados "válidos".
+   * Um produto é válido quando pelo menos um dos seus campos principais
+   * (codigo, nome, referencia, imagem, preco ou descricao) não está vazio.
+   * Isso evita que produtos completamente sem informação sejam exibidos na tela.
+   */
   const validProducts = useMemo(
     () =>
       products.filter((product) => {
+        // Junta todos os campos importantes do produto em um array
         const campos = [
           product?.codigo,
           product?.nome,
@@ -47,34 +57,44 @@ export default function Produtos() {
           product?.descricao,
         ];
 
+        // Retorna true se pelo menos um campo tiver algum conteúdo (não vazio)
         return campos.some((campo) => String(campo ?? "").trim() !== "");
       }),
     [products],
   );
 
+  // Lista de produtos válidos ordenada de acordo com a opção escolhida pelo usuário (sortBy).
   const sortedProducts = useMemo(() => {
+    // Converte o nome do produto para string de forma segura. Se o valor for undefined ou null, retorna uma string vazia.
     const getNome = (value?: string) => String(value ?? "");
 
+    // Converte o preço do produto para número de forma segura. Se o valor não for um número válido, retorna 0 para não quebrar a ordenação.
     const parsePreco = (value?: string) => {
       const numero = parseFloat(String(value ?? ""));
       return Number.isNaN(numero) ? 0 : numero;
     };
 
+    // Cria uma cópia do array para não alterar o original ao ordenar
     const clonedProducts = [...validProducts];
 
+    // Aplica a ordenação conforme a opção selecionada
     switch (sortBy) {
+      // Ordena por nome de Z até A
       case "name-desc":
         return clonedProducts.sort((a, b) =>
           getNome(b.nome).localeCompare(getNome(a.nome), "pt-BR"),
         );
+      // Ordena por preço do menor para o maior
       case "price-asc":
         return clonedProducts.sort(
           (a, b) => parsePreco(a.preco) - parsePreco(b.preco),
         );
+      // Ordena por preço do maior para o menor
       case "price-desc":
         return clonedProducts.sort(
           (a, b) => parsePreco(b.preco) - parsePreco(a.preco),
         );
+      // Ordena por nome de A até Z (padrão)
       case "name-asc":
       default:
         return clonedProducts.sort((a, b) =>
@@ -83,13 +103,16 @@ export default function Produtos() {
     }
   }, [validProducts, sortBy]);
 
+  // Calcula quantos produtos devem ser exibidos com base na página atual
   const visibleCount = page * PAGE_SIZE;
 
+  // Fatia da lista ordenada que será realmente exibida na tela.
   const visibleProducts = useMemo(
     () => sortedProducts.slice(0, visibleCount),
     [sortedProducts, visibleCount],
   );
 
+  // Indica se ainda existem produtos que não foram exibidos (usado para mostrar o botão "Carregar mais")
   const hasMore = visibleCount < sortedProducts.length;
 
   useEffect(() => {

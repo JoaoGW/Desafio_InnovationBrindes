@@ -1,17 +1,7 @@
 "use client";
-
 import { useEffect, useState } from "react";
 
-/**
- * Retorna o valor de texto com atraso (debounce).
- *
- * Útil para evitar chamadas em excesso na API enquanto o usuário digita.
- * Exemplo: digitação no campo de busca.
- *
- * @param value Texto atual digitado.
- * @param delay Tempo de espera em ms antes de atualizar o valor retornado.
- * @returns Texto com debounce aplicado.
- */
+// Retorna o valor de texto com atraso (debounce). Útil para evitar chamadas em excesso na API enquanto o usuário digita.
 export function useDebounce(value: string, delay = 400) {
   const [debouncedValue, setDebouncedValue] = useState(value);
 

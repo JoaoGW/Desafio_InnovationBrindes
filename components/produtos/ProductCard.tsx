@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Product } from "@/services/produtos.services";
+import ProductModal from "@/components/produtos/ProductModal";
 
 const CORES = [
   "#1f7fd0",
@@ -12,6 +13,7 @@ const CORES = [
 
 export default function ProductCard({ product }: { product: Product }) {
   const [corSelecionada, setCorSelecionada] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const precoNumero = parseFloat(product.preco);
   const preco =
@@ -84,10 +86,17 @@ export default function ProductCard({ product }: { product: Product }) {
 
       <button
         type="button"
+        onClick={() => setIsModalOpen(true)}
         className="mt-2 h-8 w-full rounded-sm bg-[#76b900] text-sm font-bold cursor-pointer text-white transition hover:opacity-90"
       >
         CONFIRA
       </button>
+
+      <ProductModal
+        isOpen={isModalOpen}
+        product={product}
+        onClose={() => setIsModalOpen(false)}
+      />
     </article>
   );
 }

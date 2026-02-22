@@ -12,6 +12,7 @@ export type Product = {
 };
 
 /**
+ * (OBS: A documentação abaixo foi gerada automaticamente pelo Copilot)
  * Busca a listagem de produtos na API protegida.
  *
  * Esta função realiza uma requisição HTTP GET para o endpoint de produtos,
