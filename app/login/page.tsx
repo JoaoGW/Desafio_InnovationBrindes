@@ -124,7 +124,7 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="mx-auto mt-6 block h-13 w-42.5 rounded-full bg-[#efefef] text-base font-bold text-[#4d4d4d] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                className="mx-auto mt-6 block h-13 w-42.5 cursor-pointer rounded-full bg-[#efefef] text-base font-bold text-[#4d4d4d] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isLoading ? "Entrando..." : "Login"}
               </button>
