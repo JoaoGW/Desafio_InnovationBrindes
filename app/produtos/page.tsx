@@ -5,14 +5,17 @@ import { Search } from "lucide-react";
 
 import { useDebounce } from "@/hooks/useDebounce";
 import { useProducts } from "@/hooks/useProducts";
+import {
+  aplicarFiltroFavoritos,
+  getProdutosOrdenados,
+  isProdutoValido,
+  SortOption,
+} from "@/services/produtos.utils";
 import { useAuthStore } from "@/store/auth.store";
 import { useFavoritesStore } from "@/store/favoritos.store";
 
 import Header from "@/components/layout/Header";
 import ProductCard from "@/components/produtos/ProductCard";
-
-// Opções pra exibição com sorting dos produtos
-type SortOption = "name-asc" | "name-desc" | "price-asc" | "price-desc";
 
 // Tamanho da paginação
 const PAGE_SIZE = 20;
@@ -54,71 +57,19 @@ export default function Produtos() {
    * Isso evita que produtos completamente sem informação sejam exibidos na tela.
    */
   const validProducts = useMemo(
-    () =>
-      products.filter((product) => {
-        // Junta todos os campos importantes do produto em um array
-        const campos = [
-          product?.codigo,
-          product?.nome,
-          product?.referencia,
-          product?.imagem,
-          product?.preco,
-          product?.descricao,
-        ];
-
-        // Retorna true se pelo menos um campo tiver algum conteúdo (não vazio)
-        return campos.some((campo) => String(campo ?? "").trim() !== "");
-      }),
+    () => products.filter((product) => isProdutoValido(product)),
     [products],
   );
 
   const favoriteFilteredProducts = useMemo(() => {
-    if (!showOnlyFavorites) return validProducts;
-
-    return validProducts.filter((product) =>
-      favorites.includes(product.codigo),
-    );
+    return aplicarFiltroFavoritos(validProducts, favorites, showOnlyFavorites);
   }, [favorites, showOnlyFavorites, validProducts]);
 
   // Lista de produtos válidos ordenada de acordo com a opção escolhida pelo usuário (sortBy).
-  const sortedProducts = useMemo(() => {
-    // Converte o nome do produto para string de forma segura. Se o valor for undefined ou null, retorna uma string vazia.
-    const getNome = (value?: string) => String(value ?? "");
-
-    // Converte o preço do produto para número de forma segura. Se o valor não for um número válido, retorna 0 para não quebrar a ordenação.
-    const parsePreco = (value?: string) => {
-      const numero = parseFloat(String(value ?? ""));
-      return Number.isNaN(numero) ? 0 : numero;
-    };
-
-    // Cria uma cópia do array para não alterar o original ao ordenar
-    const clonedProducts = [...favoriteFilteredProducts];
-
-    // Aplica a ordenação conforme a opção selecionada
-    switch (sortBy) {
-      // Ordena por nome de Z até A
-      case "name-desc":
-        return clonedProducts.sort((a, b) =>
-          getNome(b.nome).localeCompare(getNome(a.nome), "pt-BR"),
-        );
-      // Ordena por preço do menor para o maior
-      case "price-asc":
-        return clonedProducts.sort(
-          (a, b) => parsePreco(a.preco) - parsePreco(b.preco),
-        );
-      // Ordena por preço do maior para o menor
-      case "price-desc":
-        return clonedProducts.sort(
-          (a, b) => parsePreco(b.preco) - parsePreco(a.preco),
-        );
-      // Ordena por nome de A até Z (padrão)
-      case "name-asc":
-      default:
-        return clonedProducts.sort((a, b) =>
-          getNome(a.nome).localeCompare(getNome(b.nome), "pt-BR"),
-        );
-    }
-  }, [favoriteFilteredProducts, sortBy]);
+  const sortedProducts = useMemo(
+    () => getProdutosOrdenados(favoriteFilteredProducts, sortBy),
+    [favoriteFilteredProducts, sortBy],
+  );
 
   // Calcula quantos produtos devem ser exibidos com base na página atual
   const visibleCount = page * PAGE_SIZE;
@@ -184,19 +135,25 @@ export default function Produtos() {
               Mostrar apenas favoritos
             </button>
 
-            <select
-              value={sortBy}
-              onChange={(event) => {
-                setSortBy(event.target.value as SortOption);
-                setPage(1);
-              }}
-              className="h-10 rounded border border-black bg-white px-3 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
-            >
-              <option value="name-asc">Nome (A → Z)</option>
-              <option value="name-desc">Nome (Z → A)</option>
-              <option value="price-asc">Preço (menor → maior)</option>
-              <option value="price-desc">Preço (maior → menor)</option>
-            </select>
+            <div className="flex flex-col">
+              <label htmlFor="sort-select" className="sr-only">
+                Ordenar produtos por
+              </label>
+              <select
+                id="sort-select"
+                value={sortBy}
+                onChange={(event) => {
+                  setSortBy(event.target.value as SortOption);
+                  setPage(1);
+                }}
+                className="h-10 rounded border border-black bg-white px-3 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
+              >
+                <option value="name-asc">Nome (A → Z)</option>
+                <option value="name-desc">Nome (Z → A)</option>
+                <option value="price-asc">Preço (menor → maior)</option>
+                <option value="price-desc">Preço (maior → menor)</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -234,7 +191,10 @@ export default function Produtos() {
 
         {!isLoading && !isError && sortedProducts.length > 0 && (
           <>
-            <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+            <div
+              data-testid="products-grid"
+              className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+            >
               {visibleProducts.map((product, index) => (
                 <ProductCard
                   key={`${product.codigo || "sem-codigo"}-${product.referencia || "sem-ref"}-${index}`}

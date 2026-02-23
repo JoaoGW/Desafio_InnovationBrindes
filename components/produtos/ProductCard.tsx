@@ -1,7 +1,11 @@
 import { useState } from "react";
 import { Heart, AlertCircle } from "lucide-react";
+
 import { Product } from "@/services/produtos.services";
+import { formatPrecoParaTela } from "@/services/produtos.utils";
+
 import ProductModal from "@/components/produtos/ProductModal";
+
 import { useFavoritesStore } from "@/store/favoritos.store";
 
 const CORES = [
@@ -22,14 +26,7 @@ export default function ProductCard({ product }: { product: Product }) {
   const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite);
   const isFavorite = useFavoritesStore((state) => state.isFavorite(productId));
 
-  const precoNumero = parseFloat(product.preco);
-  const precoValido = !isNaN(precoNumero) && precoNumero > 0;
-  const preco = precoValido
-    ? new Intl.NumberFormat("pt-BR", {
-        style: "currency",
-        currency: "BRL",
-      }).format(precoNumero)
-    : "Indisponível";
+  const preco = formatPrecoParaTela(product.preco);
 
   return (
     <article className="flex flex-col mb-8">

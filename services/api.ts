@@ -22,8 +22,17 @@ api.interceptors.response.use(
       // Limpar dados de autenticação do store
       useAuthStore.getState().logout();
 
-      // Redirecionar para login
-      window.location.href = "/login";
+      // Redirecionar sem bloquear back/forward cache
+      if (typeof window !== "undefined") {
+        import("next/navigation").then(({ useRouter }) => {
+          const router = useRouter?.();
+          if (router) {
+            router.push("/login");
+          } else {
+            window.location.href = "/login";
+          }
+        });
+      }
     }
 
     return Promise.reject(error);
