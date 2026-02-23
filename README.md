@@ -1,40 +1,134 @@
-# Desafio_InnovationBrindes
+# Innovation Brindes - Desafio Front End
 
-Desafio para a posição de Dev Front End na Innovation Brindes
+Aplicação Next.js para listagem de produtos com sistema de autenticação, favoritos e funcionalidades avançadas de filtro/ordenação.
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## Tecnologias
 
-## Getting Started
+- **Next.js 16** (App Router)
+- **React 19**
+- **TypeScript 5**
+- **Tailwind CSS 4**
+- **Zustand** (gerenciamento de estado com persist)
+- **React Query** (cache e sincronização de dados)
+- **Axios** (client HTTP com interceptor)
+- **Lucide React** (ícones)
+- **Playwright** (testes E2E)
 
-First, run the development server:
+## Instalação
 
 ```bash
+# Instalar dependências
+npm install
+
+# Rodar em desenvolvimento
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+
+# Build de produção
+npm run build
+npm start
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Acesse [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Como rodar Docker
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Produção (build otimizado)
 
-## Learn More
+```bash
+# Build da imagem
+docker-compose build app
 
-To learn more about Next.js, take a look at the following resources:
+# Subir container em produção
+docker-compose up app
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Rodar em background
+docker-compose up -d app
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# Parar containers
+docker-compose down
+```
 
-## Deploy on Vercel
+### Desenvolvimento (hot reload)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+# Subir ambiente de desenvolvimento
+docker-compose --profile dev up dev
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+# Acessa em: http://localhost:3001
+```
+
+**Estrutura Docker:**
+
+- **Dockerfile**: Imagem simples com Node 20 Alpine (copiar → instalar → build → start)
+- **docker-compose.yml**: Orquestração com 2 serviços (produção na porta 3000, dev na porta 3001)
+- **.dockerignore**: Arquivos excluídos da imagem
+
+**Benefícios:**
+
+- Usa Node Alpine (imagem leve ~40MB base)
+- Build direto sem complexidade de multi-stage
+- Fácil de entender e debugar
+
+## Decisões técnicas
+
+### Arquitetura e Estado
+
+**Zustand com Persist Middleware**: Escolhido para gerenciar autenticação e favoritos pela simplicidade e performance. O middleware `persist` garante que token e favoritos sobrevivam ao reload da página sem configuração adicional.
+
+**React Query**: Implementado para cache inteligente de produtos com `staleTime` de 1 minuto e `gcTime` de 5 minutos, reduzindo chamadas desnecessárias à API e melhorando UX com dados instantâneos em navegações subsequentes.
+
+**Separação de Lógica de Negócio**: Funções puras extraídas para `services/produtos.utils.ts` (formatação de preço, validação, ordenação, filtros) permitem testes unitários isolados sem mock de React/DOM.
+
+### Performance e Otimização
+
+**Debounce na Busca**: 400ms de delay evita bombardeio da API durante digitação rápida, reduzindo carga no servidor e melhorando responsividade.
+
+**Paginação Client-Side**: 20 produtos por lote com botão "Carregar mais" balanceia performance inicial (menos renderizações) com UX fluida (scroll infinito simplificado).
+
+**Memoização Estratégica**: `useMemo` em todas as transformações de lista (validação, filtro de favoritos, ordenação, slice de paginação) previne re-cálculos desnecessários em re-renders.
+
+### Acessibilidade
+
+**Labels Semânticas**: Todos inputs/selects possuem `<label>` associado via `htmlFor`, alguns com classe `sr-only` para manter design limpo sem comprometer leitores de tela.
+
+**Focus Trap Manual**: Modal implementa navegação por Tab/Shift+Tab cíclica entre elementos focáveis, garantindo usuários de teclado não "escapem" da modal acidentalmente.
+
+**Contraste de Cores**: Ajustado de `#7a7a7a` para `#555555` e `#9a9a9a` para `#777777` para atingir ratio WCAG AA (4.5:1 mínimo).
+
+**ARIA Attributes**: `aria-modal`, `aria-labelledby`, `aria-label` em botões de ícone e `aria-hidden` em decorações garantem contexto para tecnologias assistivas.
+
+### Autenticação e Segurança
+
+**Interceptor 401**: Axios configurado para capturar erros de autenticação, limpar store via `logout()` e redirecionar automaticamente para `/login`, evitando estados inconsistentes.
+
+**Hidratação Controlada**: Flag `isHydrated` no Zustand impede redirecionamento prematuro antes do localStorage carregar token, resolvendo loop de redirect em page reload.
+
+**Token Bearer**: Enviado em todos requests autenticados via header `Authorization`, seguindo padrão OAuth 2.0.
+
+### Testes
+
+**Testes Unitários Nativos**: Node.js `test` runner (sem Jest) para funções puras, evitando configuração adicional e mantendo stack enxuta.
+
+**Playwright E2E**: Fluxo crítico de login → redirect → grid renderizado validado com seletores semânticos (`getByRole`, `getByPlaceholder`, `getByTestId`).
+
+**Funções Testáveis**: Lógica de preço, validação e ordenação isolada em módulo `utils` permite TDD sem acoplamento com componentes React.
+
+### Docker
+
+**Alpine Linux**: Base Node 20 Alpine (~40MB vs ~900MB da imagem padrão) acelera pull/push e reduz superfície de ataque sem adicionar complexidade.
+
+**Estrutura Clara**: Cada comando tem propósito óbvio: `WORKDIR` define pasta, `COPY` traz arquivos, `RUN` executa comandos, `EXPOSE` declara porta, `CMD` inicia app.
+
+## O que ficou pendente
+
+Nada ficou pendente. Todas as funcionalidades solicitadas foram implementadas.
+
+## Lighthouse
+
+Rota /login:
+<img width="590" height="756" alt="Image" src="https://github.com/user-attachments/assets/65c3e6f4-0afe-443a-b147-0fd817fc4fd6" />
+
+Rota /produtos:
+<img width="594" height="750" alt="Image" src="https://github.com/user-attachments/assets/ae2efb6b-4b15-4880-bde0-0678b933ec34" />
+
+## Fluxo
