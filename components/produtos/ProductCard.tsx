@@ -1,7 +1,11 @@
 import { useState } from "react";
 import { Heart, AlertCircle } from "lucide-react";
+
 import { Product } from "@/services/produtos.services";
+import { formatPrecoParaTela } from "@/services/produtos.utils";
+
 import ProductModal from "@/components/produtos/ProductModal";
+
 import { useFavoritesStore } from "@/store/favoritos.store";
 
 const CORES = [
@@ -22,14 +26,7 @@ export default function ProductCard({ product }: { product: Product }) {
   const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite);
   const isFavorite = useFavoritesStore((state) => state.isFavorite(productId));
 
-  const precoNumero = parseFloat(product.preco);
-  const precoValido = !isNaN(precoNumero) && precoNumero > 0;
-  const preco = precoValido
-    ? new Intl.NumberFormat("pt-BR", {
-        style: "currency",
-        currency: "BRL",
-      }).format(precoNumero)
-    : "Indisponível";
+  const preco = formatPrecoParaTela(product.preco);
 
   return (
     <article className="flex flex-col mb-8">
@@ -57,7 +54,7 @@ export default function ProductCard({ product }: { product: Product }) {
             aria-label={
               isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"
             }
-            className="absolute left-2 top-2 z-10 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-white/90 text-[#4d4d4d] transition hover:scale-105"
+            className="absolute left-2 top-2 z-10 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-white/90 text-[#4d4d4d] transition hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#76b900]"
           >
             <Heart
               size={16}
@@ -124,7 +121,7 @@ export default function ProductCard({ product }: { product: Product }) {
       <button
         type="button"
         onClick={() => setIsModalOpen(true)}
-        className="mt-2 h-8 w-full rounded-sm bg-[#76b900] text-sm font-bold cursor-pointer text-white transition hover:opacity-90"
+        className="mt-2 h-8 w-full rounded-sm bg-[#76b900] text-sm font-bold cursor-pointer text-white transition hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#76b900]/50"
       >
         CONFIRA
       </button>

@@ -134,7 +134,7 @@ export default function ProductModal({
           <button
             type="button"
             onClick={() => toggleFavorite(product.codigo)}
-            className={`cursor-pointer rounded-sm border px-4 py-2 text-sm font-semibold transition ${
+            className={`cursor-pointer rounded-sm border px-4 py-2 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#76b900] ${
               isFavorite
                 ? "border-[#e8475c] bg-[#e8475c] text-white"
                 : "border-[#d8d8d8] bg-white text-[#4d4d4d] hover:bg-[#f5f5f5]"
