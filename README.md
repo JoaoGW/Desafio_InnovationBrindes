@@ -126,9 +126,13 @@ Nada ficou pendente. Todas as funcionalidades solicitadas foram implementadas.
 ## Lighthouse
 
 Rota /login:
+
 <img width="590" height="756" alt="Image" src="https://github.com/user-attachments/assets/65c3e6f4-0afe-443a-b147-0fd817fc4fd6" />
 
 Rota /produtos:
+
 <img width="594" height="750" alt="Image" src="https://github.com/user-attachments/assets/ae2efb6b-4b15-4880-bde0-0678b933ec34" />
 
 ## Fluxo
+
+Link para o Drive com o vídeo em MP4: [Vídeo do Fluxo](https://drive.google.com/file/d/1wOdIJm4Vsihfws7pOlxwbk_5ZgA5b4am/view?usp=sharing)
