@@ -1,0 +1,41 @@
+# Docker Compose para Innovation Brindes
+version: "3.8"
+
+services:
+  # Serviço da aplicação Next.js
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: innovation-brindes-app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_TELEMETRY_DISABLED=1
+    restart: unless-stopped
+    networks:
+      - innovation-network
+
+  # Serviço de desenvolvimento
+  dev:
+    image: node:20-alpine
+    container_name: innovation-brindes-dev
+    working_dir: /app
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    ports:
+      - "3001:3000"
+    command: npm run dev
+    environment:
+      - NODE_ENV=development
+    profiles:
+      - dev
+    networks:
+      - innovation-network
+
+networks:
+  innovation-network:
+    driver: bridge
